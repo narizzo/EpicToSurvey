@@ -84,6 +84,30 @@ component_names = ['White Blood Cell Count',
 'Triglycerides',
 'CHOLESTEROL']
 
+UofCO_data_set = {'Sodium' : 'Sodium Serum/Plasma',
+                'Potassium' : 'Potassium Serum/Plasma',
+                'Chloride' : 'Chloride Serum/Plasma',
+                'Glucose' : 'Glucose Random Serum/Plasma',
+                'Creatinine' : 'Creatinine Serum/Plasma',
+                'Albumin' : 'ALBUMIN',
+                'Calcium' : 'Calcium Serum/Plasma',
+                'Magnesium' : 'MAGNESIUM SERUM',
+                'Bilirubin Direct' : 'Bilirubin, Direct',
+                'Bilirubin Indirect' : 'Bilirubin Indirect',
+                'Total Bilirubin' : 'Bilirubin Total',
+                'Alkaline Phosphatase' : 'Alkaline Phosphatase Total',
+                'ALT' : 'Alaninine Aminotransferase',
+                'AST' : 'Aspartate Aminotransferase',
+                'LDH' : 'Lactate Dehydrogenase',
+                'Gamma Glutamyl transferase (GGT)' : 'GAMMA GLUTAMYLTRANSFERASE',
+                'Blood Urea Nitrogen (BUN)' : 'Blood Urea Nitrogen',
+                'Uric Acid' : 'URIC ACID SERUM',
+                'Total Protein' : 'Protein Total Serum/Plasma',
+                'Triglycerides' : 'Triglycerides',
+                'Cholesterol' : 'CHOLESTEROL',
+                'Bicarbonate' : 'Carbon Dioxide',
+                'Amylase' : 'AMYLASE SERUM',
+                'Lipase' : 'LIPASE PLASMA'}
 
 def main():
     global temp_file
@@ -104,6 +128,7 @@ def main():
 def run_program():
     while True:
         check_file_for_update()
+
 
 def greet_user():
     print("Thanks for using Epic To Survey! \n \t -Created by Nick Rizzo- \n")
@@ -137,54 +162,25 @@ def parse_file_into_lists(file):
         datum = line[153:]
         datum = str(datum).strip()
 
-        best_ratio_score = 0
-        most_likely_component_datum_pair = ('', '')
+        if component != '' and datum != '':
+            best_ratio_score = 0
+            most_likely_component = ''
+            most_likely_datum = ''
 
-        for component_name in component_names:
-            ratio_score = fuzz.ratio(component_name, component)
-            if ratio_score == 100:
-                most_likely_component_datum_pair = (component, datum)
-                break
-            else:
-                if ratio_score > best_ratio_score:
-                    most_likely_component_datum_pair = (component, datum)
+            for component_name in component_names:
+                ratio_score = fuzz.ratio(component_name, component)
+                if ratio_score == 100:
+                    most_likely_component = component
+                    most_likely_datum = datum
+                    break
+                else:
+                    if ratio_score > best_ratio_score:
+                        most_likely_component = component
+                        most_likely_datum = datum
+            component_data[most_likely_component] = most_likely_datum
 
-        component_data[most_likely_component_datum_pair[0]] = most_likely_component_datum_pair[1]
-
-    for x in component_data:
-        print(x + ' : ' + component_data[x])
-# def parse_file_into_lists(file):
-#     global parsed_file
-#     global component_data
-#
-#     components = []
-#     ref_data = []
-#     real_data_1 = []
-#     real_data_2 = []
-#     parsed_file = [components, ref_data, real_data_1, real_data_2]
-#
-#     for line in file:
-#         component = line[0:73]
-#         component = str(component).strip()
-#         components.append(component)
-#
-#         ref_datum = line[73:131]
-#         ref_datum = str(ref_datum).strip()
-#         ref_data.append(ref_datum)
-#
-#         real_datum = line[131:153]
-#         real_datum = str(real_datum).strip()
-#         real_data_1.append(real_datum)
-#
-#         real_datum = line[153:]
-#         real_datum = str(real_datum).strip()
-#         real_data_2.append(real_datum)
-#
-#         print('{} : {}'.format(component, real_data_2))
-#         component_data[component] = real_data_2
-#
-#
-#     return parsed_file
+    #for x in component_data:
+        #print(x + ' : ' + component_data[x])
 
 
 def handle_user_input(user_input):
@@ -219,21 +215,26 @@ def fill_survey():
 
     try:
         driver = webdriver.Chrome('chromedriver.exe')
-        driver.get(config.get('paths', 'survey_url'))
-        find_all_data_field_IDs_in_HTML_Source(driver.page_source)
+        #driver.get(config.get('paths', 'survey_url'))
+        for handle in driver.window_handles:
+            driver.switch_to.window(handle)
+            print(driver.current_url)
+            if driver.current_url == 'file:///C:/Users/nrizz/Desktop/FinalMICRF.html':
+                break
+        #driver.switch_to.window()
+        #find_all_data_field_IDs_in_HTML_Source(driver.page_source)
     except FileNotFoundError:
         print("Web driver not found")
 
     try:
         # answer 1st question
-        for i in range(get_config_section_size('elements')):
-            elem = driver.find_element_by_id(config.get('elements', str(i)))
-            field_datum = field_names[i]
-            print(field_datum)
+        elem = driver.find_elements_by_tag_name('input')
+        for x in elem:
+            print(x.text)
 
-            elem.send_keys(get_datum_for_field(field_datum))
+        #elem.send_keys(get_datum_for_field(field_datum))
 
-            elem.send_keys(Keys.TAB)
+        #elem.send_keys(Keys.TAB)
 
 
         #elem.submit()
@@ -257,32 +258,38 @@ def get_config_section_size(section):
 def find_all_data_field_IDs_in_HTML_Source(page_source):
     IDs = re.findall('<td>(\w+\s*\w*)<\/td>', page_source)
     element_ids = find_corresponding_field_ID(page_source)
+    id_input_pairs = {}
 
+    IDs = remove_false_IDs(IDs)
+
+    #print(len(IDs))
+    #print(len(element_ids))
+    for n in range(len(IDs)):
+        id_input_pairs[IDs[n]] = element_ids[n]
+
+    for id in id_input_pairs:
+        print(id_input_pairs[id])
+
+
+def remove_false_IDs(IDs):
+    # currently only works for U of CO data
+    new_ID_list = []
+    for id in IDs:
+        # .keys() = inefficient
+        if UofCO_data_set.keys().__contains__(id):
+            new_ID_list.append(id)
+    return new_ID_list
 
 
 def find_corresponding_field_ID(page_source):
     element_blocks = re.findall(r'_ctl0_Content_R_loclabcontainer_loclabcontainer_\d{6}__ctl0__Text', page_source)
-    for element_block in element_blocks:
-        print(element_block)
+    #for element_block in element_blocks:
+        #print(element_block)
     #return re.match(r'(?<={}).*?(?={})'.format(start, end), page_source)
     # <input name="(\w+|\d+|\:)*"
     # id="(\w+|\d+|\:)*"
     # <input name="(\w+|\d+|\:)*" type="text" maxlength="\d+" id="(\w+|\d+|\:)*"
     return element_blocks
-
-
-def display_configurations():
-    file = open("config.ini")
-    print()
-    for line in file:
-        print(line, end='')
-
-
-def display_datafile():
-    file = open("datafile")
-    print()
-    for line in file:
-        print(line, end='')
 
 
 if __name__=="__main__":
