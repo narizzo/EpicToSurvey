@@ -8,6 +8,7 @@ from selenium.webdriver.common.keys import Keys
 import selenium.common.exceptions
 
 # file:///C:/Users/Nick/Desktop/FinalMICRF.html
+
 __temp_file__ = None
 __parsed_file__ = None
 __driver__ = webdriver
@@ -201,7 +202,7 @@ def fill_survey():
     __config__.read('config.ini')
     valid_URL = False
     while valid_URL == False:
-        if __driver__.current_url == 'file:///C:/Users/Nick/Desktop/FinalMICRF.html':
+        if __driver__.current_url == __config__.get('paths', 'survey_url'):
             print("Valid Survey URL Found.  Filling Survey")
             valid_URL = True
 
@@ -210,8 +211,6 @@ def fill_survey():
                 for each in element_target_pairs:
                     input_field = __driver__.find_element_by_id(element_target_pairs[each])
                     input_field.send_keys(__component_data_pairs__[__uco_input_element_pairs__[each]])
-                    #print(each + " : " + __uco_input_element_pairs__[each])
-                    #print(__uco_input_element_pairs__[each] + " : "+ __component_data_pairs__[__uco_input_element_pairs__[each]])
 
             except selenium.common.exceptions.NoSuchElementException:
                 print("Cannot fill survey")
@@ -220,28 +219,22 @@ def fill_survey():
             print("Sleeping")
             time.sleep(.5)
 
-
-def get_datum_for_field(datum_field_name):
-    global __component_data_pairs__
-    datum_field_value = __uco_input_element_pairs__[datum_field_name]
-    return __component_data_pairs__[datum_field_value]
-
-
-def get_config_section_size(section):
-    return len(__config__.items(section))
-
+# <td>(\w+\s*\w*)</td>
 
 def find_element_target_pairs_in_html(page_source):
-    element_ids = re.findall('<td>(\w+\s*\w*)<\/td>', page_source)
-    input_IDs = find_input_field_IDs_in_HTML(page_source)
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(page_source, 'html.parser')
+    soup_parts = soup.find_all('td', class_=False)
+    element_ids = []
+    for part in soup_parts:
+        element_ids.append(part.text)
+
     element_ids = remove_false_element_IDs(element_ids)
-
-
+    input_ids = find_input_field_IDs_in_HTML(page_source)
     element_target_pairs = {}
 
     for n in range(len(element_ids)):
-        element_target_pairs[element_ids[n]] = input_IDs[n]
-
+        element_target_pairs[element_ids[n]] = input_ids[n]
 
     return element_target_pairs
 
@@ -257,15 +250,12 @@ def remove_false_element_IDs(IDs):
 
 
 def find_input_field_IDs_in_HTML(page_source):
-    element_blocks = re.findall(r'_ctl0_Content_R_loclabcontainer_loclabcontainer_\d{6}__ctl0__Text', page_source)
-    return element_blocks
+    return re.findall(r'_ctl0_Content_R_loclabcontainer_loclabcontainer_\d{6}__ctl0__Text', page_source)
+
 
 def find_component_data_pairs_from_text_file(file):
-    from fuzzywuzzy import fuzz
-    from fuzzywuzzy import process
     global __component_data_pairs__
-   # global __component_names__
-    print("Find component data pairs from text file...")
+    print("Finding component data pairs from text file...")
     for line in file:
         component = line[0:73]
         component = str(component).strip()
