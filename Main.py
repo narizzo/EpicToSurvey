@@ -7,13 +7,39 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import selenium.common.exceptions
 
+# file:///C:/Users/Nick/Desktop/FinalMICRF.html
+__temp_file__ = None
+__parsed_file__ = None
+__driver__ = webdriver
+__config__ = configparser.ConfigParser()
+__component_data_pairs__ = {}
+__uco_input_element_pairs__ =  {'alt': 'alaninine aminotransferase',
+                                'albumin': 'albumin',
+                                'alkaline phosphatase': 'alkaline phosphatase total',
+                                'amylase': 'amylase serum',
+                                'ast': 'aspartate aminotransferase',
+                                'bilirubin indirect': 'bilirubin indirect',
+                                'total bilirubin': 'bilirubin total',
+                                'bilirubin direct': 'bilirubin, direct',
+                                'blood urea nitrogen (bun)': 'blood urea nitrogen',
+                                'calcium': 'calcium serum/plasma',
+                                'bicarbonate': 'carbon dioxide',
+                                'chloride': 'chloride serum/plasma',
+                                'cholesterol': 'cholesterol',
+                                'creatinine': 'creatinine serum/plasma',
+                                'gamma glutamyl transferase (ggt)': 'gamma glutamyltransferase',
+                                'glucose': 'glucose random serum/plasma',
+                                'ldh': 'lactate dehydrogenase',
+                                'lipase': 'lipase plasma',
+                                'magnesium': 'magnesium serum',
+                                'potassium': 'potassium serum/plasma',
+                                'total protein': 'protein total serum/plasma',
+                                'sodium': 'sodium serum/plasma',
+                                'triglycerides': 'triglycerides',
+                                'uric acid': 'uric acid serum'}
 
-temp_file = None
-parsed_file = None
-driver = webdriver
-config = configparser.ConfigParser()
-component_data = {}
-component_names = ['White Blood Cell Count',
+# not used
+__component_names__ = ['White Blood Cell Count',
 'Red Blood Cell Count',
 'Hemoglobin',
 'Hematocrit',
@@ -34,69 +60,81 @@ component_names = ['White Blood Cell Count',
 'Lymphocyte Absolute',
 'Monocytes Absolute',
 'Eosinophils Absolute',
-'Basophils Absolute',
-'Immature Granulocytes Absolute',
-'Sodium Serum/Plasma',
-'Potassium Serum/Plasma',
-'Chloride Serum/Plasma',
-'Carbon Dioxide',
-'Anion Gap',
-'Glucose Random Serum/Plasma',
-'Blood Urea Nitrogen',
-'Creatinine Serum/Plasma',
-'eGFR',
-'EGFR African American',
-'Calcium Serum/Plasma',
-'Bilirubin Total',
-'Alkaline Phosphatase Total',
-'Alaninine Aminotransferase',
-'Aspartate Aminotransferase',
-'Protein Total Serum/Plasma',
-'ALBUMIN',
-'Color Urine',
-'Appearance Urine',
-'Specific Gravity Urine',
-'pH Urine',
-'Protein Urine',
-'Glucose Urine',
-'Ketones Urine',
-'Bilirubin Urine',
-'Blood Urine',
-'Nitrite Urine',
-'Urobilinogen Urine',
-'Leukocyte Esterase Urine',
-'Bilirubin, Direct',
-'Bilirubin Indirect',
-'Prothrombin Time',
-'INR',
-'Carcinoembryonic Antigen DXI',
-'MAGNESIUM SERUM',
-'LIPASE PLASMA',
-'AMYLASE SERUM',
-'Lactate Dehydrogenase',
-'URIC ACID SERUM',
-'FREE T3',
-'T4 Free',
-'TSH',
-'Fibrinogen',
-'Activated Partial Thromboplastin Time',
-'GAMMA GLUTAMYLTRANSFERASE',
-'Triglycerides',
-'CHOLESTEROL']
+                       'Basophils Absolute',
+                       'Immature Granulocytes Absolute',
+                       'Sodium Serum/Plasma',
+                       'Potassium Serum/Plasma',
+                       'Chloride Serum/Plasma',
+                       'Carbon Dioxide',
+                       'Anion Gap',
+                       'Glucose Random Serum/Plasma',
+                       'Blood Urea Nitrogen',
+                       'Creatinine Serum/Plasma',
+                       'eGFR',
+                       'EGFR African American',
+                       'Calcium Serum/Plasma',
+                       'Bilirubin Total',
+                       'Alkaline Phosphatase Total',
+                       'Alaninine Aminotransferase',
+                       'Aspartate Aminotransferase',
+                       'Protein Total Serum/Plasma',
+                       'ALBUMIN',
+                       'Color Urine',
+                       'Appearance Urine',
+                       'Specific Gravity Urine',
+                       'pH Urine',
+                       'Protein Urine',
+                       'Glucose Urine',
+                       'Ketones Urine',
+                       'Bilirubin Urine',
+                       'Blood Urine',
+                       'Nitrite Urine',
+                       'Urobilinogen Urine',
+                       'Leukocyte Esterase Urine',
+                       'Bilirubin, Direct',
+                       'Bilirubin Indirect',
+                       'Prothrombin Time',
+                       'INR',
+                       'Carcinoembryonic Antigen DXI',
+                       'MAGNESIUM SERUM',
+                       'LIPASE PLASMA',
+                       'AMYLASE SERUM',
+                       'Lactate Dehydrogenase',
+                       'URIC ACID SERUM',
+                       'FREE T3',
+                       'T4 Free',
+                       'TSH',
+                       'Fibrinogen',
+                       'Activated Partial Thromboplastin Time',
+                       'GAMMA GLUTAMYLTRANSFERASE',
+                       'Triglycerides',
+                       'CHOLESTEROL']
+
 
 
 def main():
-    global temp_file
-    global config
+    global __temp_file__
+    global __config__
+    global __driver__
 
-    config.read('config.ini')
-    temp_file = read_file(config.get("paths", "text_file"))
+    __config__.read('config.ini')
+    __temp_file__ = read_file(__config__.get("paths", "text_file"))
+
+    try:
+        __driver__ = webdriver.Chrome('chromedriver.exe')
+        __driver__.get(__config__.get('paths', 'survey_url'))
+    except FileNotFoundError:
+        print("Web driver not found")
+
 
     threading1 = threading.Thread(target=run_program)
-    threading1.daemon = True
     threading1.start()
 
-    read_file('datafile')
+    threading2 = threading.Thread(target=start_user)
+    threading2.start()
+
+
+def start_user():
     greet_user()
     get_user_input()
 
@@ -105,6 +143,7 @@ def run_program():
     while True:
         check_file_for_update()
 
+
 def greet_user():
     print("Thanks for using Epic To Survey! \n \t -Created by Nick Rizzo- \n")
     print('//////////////////////////////////\n')
@@ -112,10 +151,17 @@ def greet_user():
 
 
 def get_user_input():
-    # main program loop
     while True:
+        print("type 'quit' to exit the program and close the browser")
         user_input = input()
         handle_user_input(user_input)
+
+
+def sort_dictionary():
+    from collections import OrderedDict
+    sortedDict = OrderedDict(sorted(__uco_input_element_pairs__.items()))
+    for key in sortedDict:
+        print('\'' + __uco_input_element_pairs__[key].lower() + '\'' + ": " + '\'' + key.lower() + '\',')
 
 
 def read_file(file_path):
@@ -124,12 +170,102 @@ def read_file(file_path):
     return file_text
 
 
-def parse_file_into_lists(file):
+def handle_user_input(user_input):
+    if user_input == 'quit':
+        __driver__.quit()
+        raise SystemExit
+
+
+def check_file_for_update():
+    global __config__
+    global __temp_file__
+
+    __config__.read('config.ini')
+    file_path = __config__.get("paths", "text_file")
+
+    if str(__temp_file__) != str(read_file(file_path)):
+        print('Changes to the file have been detected')
+        __temp_file__ = read_file(file_path)
+        find_component_data_pairs_from_text_file(__temp_file__)
+        fill_survey()
+    else:
+        #print('No change to the file detected')
+        time.sleep(.5)
+
+
+def fill_survey():
+    from selenium.webdriver.common.keys import Keys
+    global __driver__
+    global __config__
+    global field_names
+    __config__.read('config.ini')
+    valid_URL = False
+    while valid_URL == False:
+        if __driver__.current_url == 'file:///C:/Users/Nick/Desktop/FinalMICRF.html':
+            print("Valid Survey URL Found.  Filling Survey")
+            valid_URL = True
+
+            try:
+                element_target_pairs = find_element_target_pairs_in_html(__driver__.page_source)
+                for each in element_target_pairs:
+                    input_field = __driver__.find_element_by_id(element_target_pairs[each])
+                    input_field.send_keys(__component_data_pairs__[__uco_input_element_pairs__[each]])
+                    #print(each + " : " + __uco_input_element_pairs__[each])
+                    #print(__uco_input_element_pairs__[each] + " : "+ __component_data_pairs__[__uco_input_element_pairs__[each]])
+
+            except selenium.common.exceptions.NoSuchElementException:
+                print("Cannot fill survey")
+
+        else:
+            print("Sleeping")
+            time.sleep(.5)
+
+
+def get_datum_for_field(datum_field_name):
+    global __component_data_pairs__
+    datum_field_value = __uco_input_element_pairs__[datum_field_name]
+    return __component_data_pairs__[datum_field_value]
+
+
+def get_config_section_size(section):
+    return len(__config__.items(section))
+
+
+def find_element_target_pairs_in_html(page_source):
+    element_ids = re.findall('<td>(\w+\s*\w*)<\/td>', page_source)
+    input_IDs = find_input_field_IDs_in_HTML(page_source)
+    element_ids = remove_false_element_IDs(element_ids)
+
+
+    element_target_pairs = {}
+
+    for n in range(len(element_ids)):
+        element_target_pairs[element_ids[n]] = input_IDs[n]
+
+
+    return element_target_pairs
+
+
+def remove_false_element_IDs(IDs):
+    # currently only works for U of CO data
+    new_id_list = []
+    for id in IDs:
+        # .keys() = inefficient
+        if id.lower() in __uco_input_element_pairs__:
+            new_id_list.append(id.lower())
+    return new_id_list
+
+
+def find_input_field_IDs_in_HTML(page_source):
+    element_blocks = re.findall(r'_ctl0_Content_R_loclabcontainer_loclabcontainer_\d{6}__ctl0__Text', page_source)
+    return element_blocks
+
+def find_component_data_pairs_from_text_file(file):
     from fuzzywuzzy import fuzz
     from fuzzywuzzy import process
-    global component_data
-    global component_names
-
+    global __component_data_pairs__
+   # global __component_names__
+    print("Find component data pairs from text file...")
     for line in file:
         component = line[0:73]
         component = str(component).strip()
@@ -137,152 +273,28 @@ def parse_file_into_lists(file):
         datum = line[153:]
         datum = str(datum).strip()
 
-        best_ratio_score = 0
-        most_likely_component_datum_pair = ('', '')
+        if component.lower() in __uco_input_element_pairs__.values():
+            __component_data_pairs__[component.lower()] = datum
 
-        for component_name in component_names:
-            ratio_score = fuzz.ratio(component_name, component)
-            if ratio_score == 100:
-                most_likely_component_datum_pair = (component, datum)
-                break
-            else:
-                if ratio_score > best_ratio_score:
-                    most_likely_component_datum_pair = (component, datum)
+    # for each in __component_data_pairs__:
+    #     print(each + ' : ' + __component_data_pairs__[each])
 
-        component_data[most_likely_component_datum_pair[0]] = most_likely_component_datum_pair[1]
-
-    for x in component_data:
-        print(x + ' : ' + component_data[x])
-# def parse_file_into_lists(file):
-#     global parsed_file
-#     global component_data
-#
-#     components = []
-#     ref_data = []
-#     real_data_1 = []
-#     real_data_2 = []
-#     parsed_file = [components, ref_data, real_data_1, real_data_2]
-#
-#     for line in file:
-#         component = line[0:73]
-#         component = str(component).strip()
-#         components.append(component)
-#
-#         ref_datum = line[73:131]
-#         ref_datum = str(ref_datum).strip()
-#         ref_data.append(ref_datum)
-#
-#         real_datum = line[131:153]
-#         real_datum = str(real_datum).strip()
-#         real_data_1.append(real_datum)
-#
-#         real_datum = line[153:]
-#         real_datum = str(real_datum).strip()
-#         real_data_2.append(real_datum)
-#
-#         print('{} : {}'.format(component, real_data_2))
-#         component_data[component] = real_data_2
-#
-#
-#     return parsed_file
-
-
-def handle_user_input(user_input):
-    if user_input == 'quit':
-        driver.quit()
-        raise SystemExit
-
-
-def check_file_for_update():
-    global config
-    global temp_file
-
-    config.read('config.ini')
-    file_path = config.get("paths", "text_file")
-
-    if str(temp_file) != str(read_file(file_path)):
-        print('Changes to the file have been detected')
-        temp_file = read_file(file_path)
-        parse_file_into_lists(temp_file)
-        fill_survey()
-    else:
-        #print('No change to the file detected')
-        time.sleep(1)
-
-
-def fill_survey():
-    global driver
-    global config
-    global field_names
-
-    config.read('config.ini')
-
-    try:
-        driver = webdriver.Chrome('chromedriver.exe')
-        driver.get(config.get('paths', 'survey_url'))
-        find_all_data_field_IDs_in_HTML_Source(driver.page_source)
-    except FileNotFoundError:
-        print("Web driver not found")
-
-    try:
-        # answer 1st question
-        for i in range(get_config_section_size('elements')):
-            elem = driver.find_element_by_id(config.get('elements', str(i)))
-            field_datum = field_names[i]
-            print(field_datum)
-
-            elem.send_keys(get_datum_for_field(field_datum))
-
-            elem.send_keys(Keys.TAB)
-
-
-        #elem.submit()
-    except selenium.common.exceptions.NoSuchElementException:
-        print("Cannot fill survey")
-
-
-def get_datum_for_field(datum_field_name):
-    global component_data
-    config.read('config.ini')
-    datum_field_value = config.get('lookup', datum_field_name)
-
-    #print(component_data[datum_field_value])
-    return component_data[datum_field_value]
-
-
-def get_config_section_size(section):
-    return len(config.items(section))
-
-
-def find_all_data_field_IDs_in_HTML_Source(page_source):
-    IDs = re.findall('<td>(\w+\s*\w*)<\/td>', page_source)
-    element_ids = find_corresponding_field_ID(page_source)
-
-
-
-def find_corresponding_field_ID(page_source):
-    element_blocks = re.findall(r'_ctl0_Content_R_loclabcontainer_loclabcontainer_\d{6}__ctl0__Text', page_source)
-    for element_block in element_blocks:
-        print(element_block)
-    #return re.match(r'(?<={}).*?(?={})'.format(start, end), page_source)
-    # <input name="(\w+|\d+|\:)*"
-    # id="(\w+|\d+|\:)*"
-    # <input name="(\w+|\d+|\:)*" type="text" maxlength="\d+" id="(\w+|\d+|\:)*"
-    return element_blocks
-
-
-def display_configurations():
-    file = open("config.ini")
-    print()
-    for line in file:
-        print(line, end='')
-
-
-def display_datafile():
-    file = open("datafile")
-    print()
-    for line in file:
-        print(line, end='')
+        # if component != '' and datum != '':
+        #     best_ratio_score = 0
+        #     most_likely_component = ''
+        #     most_likely_datum = ''
+        #
+        #     for component_name in component_names:
+        #         ratio_score = fuzz.ratio(component_name, component)
+        #         if ratio_score == 100:
+        #             most_likely_component = component
+        #             most_likely_datum = datum
+        #             break
+        #         else:
+        #             if ratio_score > best_ratio_score:
+        #                 most_likely_component = component
+        #                 most_likely_datum = datum
+        #     component_data[most_likely_component] = most_likely_datum
 
 
 if __name__=="__main__":
