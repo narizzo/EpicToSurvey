@@ -4,7 +4,6 @@ import threading
 import time
 import fuzzywuzzy
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 import selenium.common.exceptions
 
 # file:///C:/Users/Nick/Desktop/FinalMICRF.html
@@ -12,7 +11,7 @@ import selenium.common.exceptions
 __temp_file__ = None
 __parsed_file__ = None
 __driver__ = webdriver
-__config__ = configparser.ConfigParser()
+__config__ = configparser.RawConfigParser()
 __component_data_pairs__ = {}
 __uco_input_element_pairs__ =  {'alt': 'alaninine aminotransferase',
                                 'albumin': 'albumin',
@@ -38,79 +37,7 @@ __uco_input_element_pairs__ =  {'alt': 'alaninine aminotransferase',
                                 'sodium': 'sodium serum/plasma',
                                 'triglycerides': 'triglycerides',
                                 'uric acid': 'uric acid serum'}
-
-# not used
-__component_names__ = ['White Blood Cell Count',
-'Red Blood Cell Count',
-'Hemoglobin',
-'Hematocrit',
-'Mean Corpuscular Volume',
-'Mean Corpuscular Hemoglobin',
-'Mean Corpuscular Hemoglobin Concentration',
-'Platelet Count',
-'RED CELL DISTRIBUTION WIDTH CV',
-'NRBC Percent',
-'NRBC Absolute',
-'Segmented Neutrophil Percent',
-'Lymphocyte Percent',
-'MONOCYTE PERCENT',
-'Eosinophils Percent',
-'Basophils Percent',
-'Immature Granulocytes Percent',
-'Neutrophils Absolute',
-'Lymphocyte Absolute',
-'Monocytes Absolute',
-'Eosinophils Absolute',
-                       'Basophils Absolute',
-                       'Immature Granulocytes Absolute',
-                       'Sodium Serum/Plasma',
-                       'Potassium Serum/Plasma',
-                       'Chloride Serum/Plasma',
-                       'Carbon Dioxide',
-                       'Anion Gap',
-                       'Glucose Random Serum/Plasma',
-                       'Blood Urea Nitrogen',
-                       'Creatinine Serum/Plasma',
-                       'eGFR',
-                       'EGFR African American',
-                       'Calcium Serum/Plasma',
-                       'Bilirubin Total',
-                       'Alkaline Phosphatase Total',
-                       'Alaninine Aminotransferase',
-                       'Aspartate Aminotransferase',
-                       'Protein Total Serum/Plasma',
-                       'ALBUMIN',
-                       'Color Urine',
-                       'Appearance Urine',
-                       'Specific Gravity Urine',
-                       'pH Urine',
-                       'Protein Urine',
-                       'Glucose Urine',
-                       'Ketones Urine',
-                       'Bilirubin Urine',
-                       'Blood Urine',
-                       'Nitrite Urine',
-                       'Urobilinogen Urine',
-                       'Leukocyte Esterase Urine',
-                       'Bilirubin, Direct',
-                       'Bilirubin Indirect',
-                       'Prothrombin Time',
-                       'INR',
-                       'Carcinoembryonic Antigen DXI',
-                       'MAGNESIUM SERUM',
-                       'LIPASE PLASMA',
-                       'AMYLASE SERUM',
-                       'Lactate Dehydrogenase',
-                       'URIC ACID SERUM',
-                       'FREE T3',
-                       'T4 Free',
-                       'TSH',
-                       'Fibrinogen',
-                       'Activated Partial Thromboplastin Time',
-                       'GAMMA GLUTAMYLTRANSFERASE',
-                       'Triglycerides',
-                       'CHOLESTEROL']
-
+__is_test__ = False
 
 
 def main():
@@ -123,7 +50,11 @@ def main():
 
     try:
         __driver__ = webdriver.Chrome('chromedriver.exe')
-        __driver__.get(__config__.get('paths', 'survey_url'))
+        __driver__.maximize_window()
+        if __is_test__:
+            __driver__.get('file:///C:/Users/Nick/Desktop/FinalMICRF.html')
+        else:
+            __driver__.get(__config__.get('paths', 'login_page'))
     except FileNotFoundError:
         print("Web driver not found")
 
@@ -146,14 +77,14 @@ def run_program():
 
 
 def greet_user():
-    print("Thanks for using Epic To Survey! \n \t -Created by Nick Rizzo- \n")
+    print("Thanks for using Epic To Survey! \n \t -Created by Nick Rizzo :: nrizzo414@gmail.com- \n")
     print('//////////////////////////////////\n')
-    print('Update the text file with new data to begin')
+    print('> Update the text file with new data to begin')
 
 
 def get_user_input():
     while True:
-        print("type 'quit' to exit the program and close the browser")
+        print("> Enter 'quit' to exit the program and close the browser")
         user_input = input()
         handle_user_input(user_input)
 
@@ -185,27 +116,39 @@ def check_file_for_update():
     file_path = __config__.get("paths", "text_file")
 
     if str(__temp_file__) != str(read_file(file_path)):
-        print('Changes to the file have been detected')
+        print('> Changes to the file have been detected')
         __temp_file__ = read_file(file_path)
         find_component_data_pairs_from_text_file(__temp_file__)
         fill_survey()
     else:
-        #print('No change to the file detected')
         time.sleep(.5)
 
 
 def fill_survey():
-    from selenium.webdriver.common.keys import Keys
+    from selenium.webdriver.support.ui import Select
     global __driver__
     global __config__
     global field_names
-    __config__.read('config.ini')
-    valid_URL = False
-    while valid_URL == False:
-        if __driver__.current_url == __config__.get('paths', 'survey_url'):
-            print("Valid Survey URL Found.  Filling Survey")
-            valid_URL = True
+    valid_url = ''
 
+    __config__.read('config.ini')
+
+    is_invalid_url = True
+    while is_invalid_url:
+        if __is_test__:
+            valid_url = 'file:///C:/Users/Nick/Desktop/FinalMICRF.html'
+        else:
+            valid_url = __config__.get('paths', 'survey_url')
+            valid_url = valid_url[:len(valid_url)-6]
+
+        if __driver__.current_url == valid_url:
+            is_invalid_url = False
+
+            # select U of CO Hospital from drop down
+            select = Select(__driver__.find_element_by_id('_ctl0_Content_R_header_LOC_DropDown'))
+            select.select_by_value('22')
+
+            # fill fields
             try:
                 element_target_pairs = find_element_target_pairs_in_html(__driver__.page_source)
                 for each in element_target_pairs:
@@ -213,13 +156,12 @@ def fill_survey():
                     input_field.send_keys(__component_data_pairs__[__uco_input_element_pairs__[each]])
 
             except selenium.common.exceptions.NoSuchElementException:
-                print("Cannot fill survey")
+                print("> Cannot fill survey")
 
         else:
-            print("Sleeping")
+            print('> Invalid survey URL')
             time.sleep(.5)
 
-# <td>(\w+\s*\w*)</td>
 
 def find_element_target_pairs_in_html(page_source):
     from bs4 import BeautifulSoup
@@ -243,7 +185,6 @@ def remove_false_element_IDs(IDs):
     # currently only works for U of CO data
     new_id_list = []
     for id in IDs:
-        # .keys() = inefficient
         if id.lower() in __uco_input_element_pairs__:
             new_id_list.append(id.lower())
     return new_id_list
@@ -255,7 +196,7 @@ def find_input_field_IDs_in_HTML(page_source):
 
 def find_component_data_pairs_from_text_file(file):
     global __component_data_pairs__
-    print("Finding component data pairs from text file...")
+
     for line in file:
         component = line[0:73]
         component = str(component).strip()
